@@ -8,7 +8,7 @@ Minimum Requirements:
 
 - MySQL
 
-- MySQL Java Connector 5.1.47
+- JDBC Java Connector 5.1.47
 
 
 This project is a demonstartion of relevant skills utilizing various tools in the Hadoop echo system. This work builds on a previous project - '[Data-Engineering-Java-MySQL](https://github.com/RonKG/Data-Engineering-Java)' - where data is retrieved from the MySQL RDBMS into Hadoop's **HDFS** for data warehousing.
