@@ -1,0 +1,51 @@
+/* # create temp */
+DROP TABLE IF EXISTS temp2;
+CREATE EXTERNAL TABLE temp2
+	( 		BRANCH_CODE   STRING, 
+			BRANCH_NAME   STRING, 
+			BRANCH_STREET STRING, 
+			BRANCH_CITY   STRING,
+	 		BRANCH_STATE  STRING,
+			BRANCH_ZIP    STRING,
+			BRANCH_PHONE  STRING,
+			LAST_UPDATED  TIMESTAMP
+	 )
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
+LOCATION'/user/maria_dev/hadoop_casestudy/branch_tables'
+tblproperties ("skip.header.line.count"="0");
+
+SELECT * FROM temp2;
+
+/* # create partitioned table */
+DROP TABLE IF EXISTS CDW_SAPP_D_BRANCH;
+CREATE TABLE CDW_SAPP_D_BRANCH
+	( 		BRANCH_CODE   STRING, 
+			BRANCH_NAME   STRING, 
+			BRANCH_STREET STRING, 
+			BRANCH_CITY   STRING, 
+			BRANCH_ZIP    STRING,
+			BRANCH_PHONE  STRING,
+			LAST_UPDATED  TIMESTAMP
+	 )
+PARTITIONED BY(BRANCH_STATE STRING)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
+LOCATION'/user/maria_dev/hadoop_casestudy/CDW_SAPP_D_BRANCH'
+tblproperties ("skip.header.line.count"="0");
+
+/* # load data in to partitoned table */
+set hive.exec.dynamic.partition=true;
+set hive.exec.dynamic.partition.mode=nonstrict;
+INSERT OVERWRITE TABLE CDW_SAPP_D_BRANCH
+ 	PARTITION (BRANCH_STATE)
+	SELECT
+		BRANCH_CODE, 
+		BRANCH_NAME, 
+		BRANCH_STREET, 
+		BRANCH_CITY, 
+		BRANCH_ZIP,
+		BRANCH_PHONE,
+		LAST_UPDATED,
+		BRANCH_STATE
+FROM temp2;
+
+SELECT * FROM CDW_SAPP_D_BRANCH LIMIT 3;

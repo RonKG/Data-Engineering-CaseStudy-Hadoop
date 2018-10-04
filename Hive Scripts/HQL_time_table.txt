@@ -1,0 +1,46 @@
+/* # create temp */
+DROP TABLE IF EXISTS temp4;
+CREATE EXTERNAL TABLE temp4
+	( 		
+	  		TIMEID   STRING, 
+			DAY      STRING, 
+			MONTH    STRING, 
+			QUARTER   STRING,
+	 		YEAR     STRING
+	 )
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+LOCATION'/user/maria_dev/hadoop_casestudy/time_tables'
+tblproperties ("skip.header.line.count"="0");
+
+--------------------------
+
+DROP TABLE IF EXISTS CDW_SAPP_D_TIME;
+CREATE TABLE CDW_SAPP_D_TIME
+	( 		
+			TIMEID   STRING, 
+			DAY      STRING, 
+			MONTH    STRING, 
+	 		YEAR     STRING
+	 )
+PARTITIONED BY(QUARTER STRING)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+LOCATION'/user/maria_dev/hadoop_casestudy/CDW_SAPP_D_TIME'
+tblproperties ("skip.header.line.count"="0");
+
+------------------------------
+
+set hive.exec.dynamic.partition=true;
+set hive.exec.dynamic.partition.mode=nonstrict;
+INSERT OVERWRITE TABLE CDW_SAPP_D_TIME
+ 	PARTITION (QUARTER)
+	SELECT
+			TIMEID, 
+			DAY, 
+			MONTH, 
+	 		YEAR,
+			QUARTER
+FROM temp4;
+
+---------------------------------------
+SELECT * FROM CDW_SAPP_D_TIME;
+

@@ -1,0 +1,12 @@
+DROP TABLE IF EXISTS CDW_SAPP_D_TIME;
+CREATE TABLE CDW_SAPP_D_TIME
+	( 		
+			TIMEID   STRING, 
+			DAY      STRING, 
+			MONTH    STRING, 
+	 		YEAR     STRING
+	 )
+PARTITIONED BY(QUARTER STRING)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+LOCATION'/user/maria_dev/hadoop_casestudy/CDW_SAPP_D_TIME'
+tblproperties ("skip.header.line.count"="0");
