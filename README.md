@@ -25,5 +25,5 @@ This project is a demonstartion of relevant skills utilizing various tools in th
 
 5. This new  sqoop jobs are incorporated into a second Oozie workflow  and Coordinator files that handle the scheduled database updates on a regular bases.
 
-6. This new data is visualized and resulting graphics can be found in the visuals folder of this repo.
+6. This new data is visualized in Hive and resulting graphics can be found in the visuals folder of this repo.
 
