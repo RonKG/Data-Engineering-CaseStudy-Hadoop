@@ -1,49 +1,29 @@
 Minimum Requirements:
 
+- Apache Hadoop 3.0.1 
+
+- Running Apache Ambari - Hortonworks on Linux
+
 - JavaSE 1.8
 
 - MySQL
 
 - MySQL Java Connector 5.1.47
 
-- Create the DB by running .SQL file on terminal or Work Bench.
 
-- Project build is done on Eclipse IDE.
+This project is a demonstartion of relevant skills utilizing various tools in the Hadoop echo system. This work builds on a previous project - '[Data-Engineering-Java-MySQL](https://github.com/RonKG/Data-Engineering-Java)' - where data is retrieved from the MySQL RDBMS into Hadoop's **HDFS** for data warehousing.
 
-	
-This project demonstrates proficiency in Core Java and (ANSI) SQL. I used Java to build a backend program that performs some basic and advanced database operations on a MySQL RDBMS. By the end of the project, 
-I have demonstrated how to add, delete and alter db entries. The main database is created from a SQL script provided in this repository. The connection to the db is achieved through a JDBC Driver.
+#### The workflow and tools to achieve the above task is as follows:
 
-The java folders and classes are organized as follows:
-1. Model Classes
-2. DAO (DataAccessObjects)
-3. Runner Classes
-4. Other supporting files
+1. Import data from MySQL with **SCOOP** using a scoop job running from the scoop meta-store.
 
+2. Use **HIVE** to create external tables that allow us a view into the imported data. A further managed table is also created and partitioned using one of the columns. This will allow us to improve the maintenance, performance or management of data.
 
-## Project Requirements are defined below:
+3. The above two steps are bundled into an **OOZIE** Workflow. An oozie workflow allows us to schedule hadoop database tasks to run after a set of conditions are met.
 
-### 2.1 Functional Requirements – Operational Database
+4. Write additional Sqoop jobs to fetch new data from the RDBMS as appends or updated records.
 
-##### 2.1.1 Transaction Details - Functional Requirements
+5. This new  sqoop jobs are incorporated into a new Oozie workflow that handle the scheduled database updates on a regular bases.
 
-	1) To display the transactions made by
-	customers living in a given zipcode for a
-	given month and year. Order by day in
-	descending order.
-	2) To display the number and total values of
-	transactions for a given type.
-	3) To display the number and total values of
-	transactions for branches in a given state
+6. This new data is visualized and resulting graphics can be found in the visuals folder of this repo.
 
-##### 2.1.2 Customer Details  - 
-	
-	1) To check the existing account details of a
-	customer.
-	2) To modify the existing account details of a
-	customer
-	3) To generate monthly bill for a credit card
-	number for a given month and year.
-	4) To display the transactions made by a
-	customer between two dates. Order by year,
-	month, and day in descending order.
