@@ -1,0 +1,14 @@
+DROP TABLE IF EXISTS temp2;
+CREATE EXTERNAL TABLE temp2
+	( 		BRANCH_CODE   STRING, 
+			BRANCH_NAME   STRING, 
+			BRANCH_STREET STRING, 
+			BRANCH_CITY   STRING,
+	 		BRANCH_STATE  STRING,
+			BRANCH_ZIP    STRING,
+			BRANCH_PHONE  STRING,
+			LAST_UPDATED  TIMESTAMP
+	 )
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
+LOCATION'/user/maria_dev/hadoop_casestudy/branch_tables'
+tblproperties ("skip.header.line.count"="0");

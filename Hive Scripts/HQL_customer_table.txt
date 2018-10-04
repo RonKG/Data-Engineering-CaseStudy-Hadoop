@@ -1,0 +1,92 @@
+/*
+--TEMP TABLE
+*/
+
+DROP TABLE IF EXISTS temp;
+CREATE EXTERNAL TABLE temp 
+	(		
+			CUST_F_NAME  STRING, 
+			CUST_M_NAME  STRING,
+			CUST_L_NAME  STRING,
+			CUST_SSN     STRING,
+			CUST_CC_NO   STRING,
+	 		APT_NO       STRING,
+			STREET_NAME  STRING,
+			CUST_CITY    STRING,
+			CUST_STATE   STRING,
+			CUST_COUNTRY STRING,
+			CUST_ZIP     STRING,
+			CUST_PHONE   STRING,
+			CUST_EMAIL   STRING,
+			LAST_UPDATED TIMESTAMP
+	)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+LOCATION '/user/maria_dev/hadoop_casestudy/customer_tables'
+tblproperties ("skip.header.line.count"="0");
+
+/*
+--test
+SELECT * FROM temp;
+
+----------------------------------------------------
+
+--CREATE PARTITIONED TABLE
+*/
+
+DROP TABLE IF EXISTS CDW_SAPP_D_CUSTOMER;
+CREATE TABLE CDW_SAPP_D_CUSTOMER
+	( 		
+			CUST_SSN      STRING, 
+			CUST_F_NAME   STRING, 
+			CUST_M_NAME   STRING, 
+			CUST_L_NAME   STRING, 
+			CUST_CC_NO    STRING,
+			CUST_STREET   STRING,
+			CUST_CITY     STRING,
+			CUST_COUNTRY  STRING, 
+			CUST_ZIP      STRING, 
+			CUST_PHONE    STRING, 
+			CUST_EMAIL    STRING, 
+			LAST_UPDATED  TIMESTAMP
+	 )
+PARTITIONED BY(CUST_STATE STRING)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+LOCATION'/user/maria_dev/hadoop_casestudy/CDW_SAPP_D_CUSTOMER'
+tblproperties ("skip.header.line.count"="0");
+
+/*
+--test
+SELECT * FROM CDW_SAPP_D_CUSTOMER;
+------------------------------------------------------
+
+--INSERT FORMARTTED DATA INTO EXTERNAL PARTITIONED TABLE
+*/
+
+set hive.exec.dynamic.partition=true;
+set hive.exec.dynamic.partition.mode=nonstrict;
+INSERT OVERWRITE TABLE CDW_SAPP_D_CUSTOMER
+ 	PARTITION (CUST_STATE)
+	SELECT
+		CAST(CUST_SSN AS BIGINT)  AS   SSN,
+		CUST_F_NAME               AS   FIRST_NAME,
+		CUST_M_NAME               AS   MIDDLE_NAME,
+		CUST_L_NAME               AS   LAST_NAME,
+		CUST_CC_NO                AS   CREDIT_CARD_NO, 
+		CONCAT_WS(' ',STREET_NAME,APT_NO) AS CUST_STREET,
+		CUST_CITY                 AS   CUST_CITY,
+		CUST_COUNTRY              AS   CUST_COUNTRY,
+		CAST(CUST_ZIP AS BIGINT)  AS   CUST_ZIP,
+		CUST_PHONE                AS   CUST_PHONE,
+		CUST_EMAIL                AS   CUST_EMAIL,
+		LAST_UPDATED              AS   LAST_UPDATED,
+		CUST_STATE                AS   CUST_STATE
+FROM temp;
+/*
+--test
+SELECT * FROM CDW_SAPP_D_CUSTOMER  LIMIT 5;
+SELECT * FROM CDW_SAPP_D_CUSTOMER WHERE CUST_F_NAME='Dallas';
+SELECT * FROM CDW_SAPP_D_CUSTOMER WHERE CUST_F_NAME='Samantha';
+SELECT * FROM CDW_SAPP_D_CUSTOMER WHERE CUST_F_NAME LIKE 'D%';
+
+
+*/

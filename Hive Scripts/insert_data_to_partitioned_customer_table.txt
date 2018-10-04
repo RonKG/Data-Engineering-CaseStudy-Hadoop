@@ -1,0 +1,19 @@
+set hive.exec.dynamic.partition=true;
+set hive.exec.dynamic.partition.mode=nonstrict;
+INSERT OVERWRITE TABLE CDW_SAPP_D_CUSTOMER
+ 	PARTITION (CUST_STATE)
+	SELECT
+		CAST(CUST_SSN AS BIGINT)  AS   SSN,
+		CUST_F_NAME               AS   FIRST_NAME,
+		CUST_M_NAME               AS   MIDDLE_NAME,
+		CUST_L_NAME               AS   LAST_NAME,
+		CUST_CC_NO                AS   CREDIT_CARD_NO, 
+		CONCAT_WS(' ',STREET_NAME,APT_NO) AS CUST_STREET,
+		CUST_CITY                 AS   CUST_CITY,
+		CUST_COUNTRY              AS   CUST_COUNTRY,
+		CAST(CUST_ZIP AS BIGINT)  AS   CUST_ZIP,
+		CUST_PHONE                AS   CUST_PHONE,
+		CUST_EMAIL                AS   CUST_EMAIL,
+		LAST_UPDATED              AS   LAST_UPDATED,
+		CUST_STATE                AS   CUST_STATE
+FROM temp;

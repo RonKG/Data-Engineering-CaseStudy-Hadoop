@@ -1,0 +1,54 @@
+DROP TABLE IF EXISTS temp3;
+CREATE EXTERNAL TABLE temp3
+	( 		
+	  		TRANSACTION_ID     STRING,
+			CUST_CC_NO         STRING, 
+			TIMEID             STRING, 
+			BRANCH_CODE        STRING, 
+			CUST_SSN           STRING, 
+			TRANSACTION_TYPE   STRING,
+			TRANSACTION_VALUE  DECIMAL(20,3)
+	 )
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+LOCATION'/user/maria_dev/hadoop_casestudy/creditcard_tables'
+tblproperties ("skip.header.line.count"="0");
+
+select * from temp3 limit 5;
+----------------------------------
+
+DROP TABLE IF EXISTS CDW_SAPP_F_CREDIT_CARD;
+CREATE TABLE CDW_SAPP_F_CREDIT_CARD
+	( 		
+			TRANSACTION_ID     STRING,
+	  		CUST_CC_NO         STRING, 
+			TIMEID             STRING, 
+			CUST_SSN           STRING, 
+			TRANSACTION_TYPE   STRING,
+			TRANSACTION_VALUE  DECIMAL(20,3)
+	 )
+PARTITIONED BY(BRANCH_CODE STRING)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
+LOCATION'/user/maria_dev/hadoop_casestudy/CDW_SAPP_F_CREDIT_CARD'
+tblproperties ("skip.header.line.count"="0");
+
+------------------------------
+
+set hive.exec.dynamic.partition=true;
+set hive.exec.dynamic.partition.mode=nonstrict;
+INSERT OVERWRITE TABLE CDW_SAPP_F_CREDIT_CARD
+ 	PARTITION (BRANCH_CODE)
+	SELECT
+		TRANSACTION_ID,
+		CUST_CC_NO, 
+		TIMEID, 
+		CUST_SSN, 
+		TRANSACTION_TYPE,
+		TRANSACTION_VALUE,
+		BRANCH_CODE
+FROM temp3;
+
+---------------------------------------
+SELECT * FROM CDW_SAPP_F_CREDIT_CARD LIMIT 5;
+
+
+

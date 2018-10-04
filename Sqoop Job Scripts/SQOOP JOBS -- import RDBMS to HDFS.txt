@@ -1,0 +1,147 @@
+sqoop and oozie commands
+
+# start_oozie
+oozie job -oozie http://localhost:11000/oozie -config /root/Documents/job00.properties -run
+
+# run oozie joboozie job -oozie http://localhost:11000/oozie -config /root/Documents/job00.properties -run
+
+# verify sqoop jobs
+sqoop job --list --meta-connect jdbc:hsqldb:hsql://localhost:16000/sqoop
+
+# run sqoop job
+sqoop job --meta-connect jdbc:hsqldb:hsql://localhost:16000/sqoop --exec cs_job_one
+
+
+
+-------------------------------------------------------------
+# sqoop import and job  customer_tables
+-------------------------------------------------------------
+
+# sqoop_import 1
+sqoop import \
+--connect jdbc:mysql://localhost/CDW_SAPP \
+--driver com.mysql.jdbc.Driver \
+--table CDW_SAPP_CUSTOMER \
+--m 1 \
+--target-dir /user/maria_dev/hadoop_casestudy/customer_tables
+###############
+# sqoop job 1
+###############
+sqoop job \
+--meta-connect jdbc:hsqldb:hsql://localhost:16000/sqoop \
+--create customer_job \
+-- import \
+--connect jdbc:mysql://localhost/CDW_SAPP \
+--driver com.mysql.jdbc.Driver \
+--table CDW_SAPP_CUSTOMER \
+-m 1 \
+--target-dir /user/maria_dev/hadoop_casestudy/customer_tables
+
+-------------------------------------------------------------
+# sqoop import and job  branch_tables
+-------------------------------------------------------------
+
+# sqoop import 2
+sqoop import \
+--connect jdbc:mysql://localhost/CDW_SAPP \
+--driver com.mysql.jdbc.Driver \
+--query \
+'SELECT BRANCH_CODE, BRANCH_NAME, BRANCH_STREET, BRANCH_CITY, BRANCH_STATE, COALESCE(BRANCH_ZIP,99999) AS BRANCH_ZIP, INSERT(INSERT(INSERT(BRANCH_PHONE,1,0, "("), 5,0,") "),10,0,"-") AS BRANCH_PHONE, LAST_UPDATED FROM CDW_SAPP_BRANCH WHERE $CONDITIONS' \
+--fields-terminated-by '\t' \
+-m 1 \
+--target-dir /user/maria_dev/hadoop_casestudy/branch_tables
+
+###############
+# sqoop job 2
+###############
+sqoop job \
+--meta-connect jdbc:hsqldb:hsql://localhost:16000/sqoop \
+--create branch_job \
+-- import \
+--connect jdbc:mysql://localhost/CDW_SAPP \
+--driver com.mysql.jdbc.Driver \
+--query \
+'SELECT BRANCH_CODE, BRANCH_NAME, BRANCH_STREET, BRANCH_CITY, BRANCH_STATE, COALESCE(BRANCH_ZIP,99999) AS BRANCH_ZIP, INSERT(INSERT(INSERT(BRANCH_PHONE,1,0, "("), 5,0,") "),10,0,"-") AS BRANCH_PHONE, LAST_UPDATED FROM CDW_SAPP_BRANCH WHERE $CONDITIONS' \
+--fields-terminated-by '\t' \
+-m 1 \
+--target-dir /user/maria_dev/hadoop_casestudy/branch_tables
+
+-------------------------------------------------------------
+# sqoop import and job  creditcard_tables
+-------------------------------------------------------------
+
+# sqoop import 3
+sqoop import \
+--connect jdbc:mysql://localhost/CDW_SAPP \
+--driver com.mysql.jdbc.Driver \
+--query \
+'SELECT TRANSACTION_ID, CREDIT_CARD_NO AS CUST_CC_NO, CONCAT(LPAD(DAY,2,0),LPAD(MONTH,2,0),YEAR)AS TIMEID, BRANCH_CODE, CUST_SSN, TRANSACTION_TYPE, ROUND(TRANSACTION_VALUE, 2) AS TRANSACTION_VALUE FROM CDW_SAPP_CREDITCARD WHERE $CONDITIONS' \
+--fields-terminated-by ',' \
+-m 1 \
+--target-dir /user/maria_dev/hadoop_casestudy/creditcard_tables
+
+###############
+# sqoop job 3
+###############
+sqoop job \
+--meta-connect jdbc:hsqldb:hsql://localhost:16000/sqoop \
+--create creditcard_job \
+-- import \
+--connect jdbc:mysql://localhost/CDW_SAPP \
+--driver com.mysql.jdbc.Driver \
+--query \
+'SELECT TRANSACTION_ID, CREDIT_CARD_NO AS CUST_CC_NO, CONCAT(LPAD(DAY,2,0),LPAD(MONTH,2,0),YEAR)AS TIMEID, BRANCH_CODE, CUST_SSN, TRANSACTION_TYPE, ROUND(TRANSACTION_VALUE, 2) AS TRANSACTION_VALUE FROM CDW_SAPP_CREDITCARD WHERE $CONDITIONS' \
+--fields-terminated-by ',' \
+-m 1 \
+--target-dir /user/maria_dev/hadoop_casestudy/creditcard_tables
+
+-------------------------------------------------------------
+# sqoop import and job  time_tables
+-------------------------------------------------------------
+
+# sqoop import 4
+sqoop import \
+--connect jdbc:mysql://localhost/CDW_SAPP \
+--driver com.mysql.jdbc.Driver \
+--query \
+'SELECT 
+TIMEID AS TIMEID, 
+DAY AS DAY,
+MONTH AS MONTH, 
+QUARTER(CONCAT(YEAR,LPAD(MONTH,2,0), LPAD(DAY,2,0))) AS QUARTER, 
+YEAR AS YEAR 
+FROM CDW_SAPP_CREDITCARD WHERE $CONDITIONS' \
+--fields-terminated-by ',' \
+-m 1 \
+--target-dir /user/maria_dev/hadoop_casestudy/time_tables
+
+###############
+# sqoop job 4
+###############
+sqoop job \
+--meta-connect jdbc:hsqldb:hsql://localhost:16000/sqoop \
+--create time_job \
+-- import \
+--connect jdbc:mysql://localhost/CDW_SAPP \
+--driver com.mysql.jdbc.Driver \
+--query \
+'SELECT 
+TIMEID AS TIMEID, 
+DAY AS DAY,
+MONTH AS MONTH, 
+QUARTER(CONCAT(YEAR,LPAD(MONTH,2,0), LPAD(DAY,2,0))) AS QUARTER, 
+YEAR AS YEAR 
+FROM CDW_SAPP_CREDITCARD WHERE $CONDITIONS' \
+--fields-terminated-by ',' \
+-m 1 \
+--target-dir /user/maria_dev/hadoop_casestudy/time_tables
+
+# LIST OF ALL UPDATE JOBS
+customer_job
+branch_job
+creditcard_job
+time_job
+update_customer_data
+update_branch_data
+update_creditcard_data
+update_time_data

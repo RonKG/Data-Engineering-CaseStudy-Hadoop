@@ -1,0 +1,13 @@
+set hive.exec.dynamic.partition=true;
+set hive.exec.dynamic.partition.mode=nonstrict;
+INSERT OVERWRITE TABLE CDW_SAPP_F_CREDIT_CARD
+ 	PARTITION (BRANCH_CODE)
+	SELECT
+		TRANSACTION_ID,
+		CUST_CC_NO, 
+		TIMEID, 
+		CUST_SSN, 
+		TRANSACTION_TYPE,
+		TRANSACTION_VALUE,
+		BRANCH_CODE
+FROM temp3;

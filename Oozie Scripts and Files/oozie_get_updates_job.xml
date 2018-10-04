@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Oozie Workflow for UPDATING all tables from RDBMS -->
+
+<workflow-app xmlns="uri:oozie:workflow:0.4" name="Update HDFS tables with new data from RDBMS">
+		<start to="sqoop_update_customer_table"/>		
+		<!-- step 1 : update customer table-->	
+		<action name="sqoop_update_customer_table">
+			<sqoop xmlns="uri:oozie:sqoop-action:0.2">
+				<job-tracker>${jobTracker}</job-tracker>
+				<name-node>${nameNode}</name-node>
+				<configuration>
+					<property>
+						<name>mapred.job.queue.name</name>
+						<value>${queueName}</value>
+					</property>
+				</configuration>
+				<command>job --meta-connect jdbc:hsqldb:hsql://localhost:16000/sqoop --exec update_customer_data</command>	
+			</sqoop>
+			<ok to="insert_data_to_partitioned_customer_table"/>
+			<error to="kill_job"/>
+		</action>
+		<!-- step 2 : insert new data into customer table-->
+		<action name="insert_data_to_partitioned_customer_table">
+			<hive xmlns="uri:oozie:hive-action:0.4">
+				<job-tracker>${jobTracker}</job-tracker>
+				<name-node>${nameNode}</name-node>				
+				<script>/user/maria_dev/hadoop_casestudy/insert_data_to_partitioned_customer_table.txt</script>			
+			</hive>
+			<ok to="sqoop_update_branch_table" />
+			<error to="kill_job" />
+		</action>		
+		<!-- step 3 : update_branch_table-->	
+		<action name="sqoop_update_branch_table">
+			<sqoop xmlns="uri:oozie:sqoop-action:0.2">
+				<job-tracker>${jobTracker}</job-tracker>
+				<name-node>${nameNode}</name-node>
+				<configuration>
+					<property>
+						<name>mapred.job.queue.name</name>
+						<value>${queueName}</value>
+					</property>
+				</configuration>
+				<command>job --meta-connect jdbc:hsqldb:hsql://localhost:16000/sqoop --exec update_branch_data</command>	
+			</sqoop>
+			<ok to="insert_data_to_partitioned_branch_table"/>
+			<error to="kill_job" />
+		</action>		
+		<!-- step 4 insert_data_to_partitioned_branch_table -->
+		<action name="insert_data_to_partitioned_branch_table">
+			<hive xmlns="uri:oozie:hive-action:0.4">
+				<job-tracker>${jobTracker}</job-tracker>
+				<name-node>${nameNode}</name-node>				
+				<script>/user/maria_dev/hadoop_casestudy/insert_data_to_partitioned_branch_table.txt</script>			
+			</hive>
+			<ok to="sqoop_update_creditcard_table" />
+			<error to="kill_job" />
+		</action>			
+		<!-- step5 : update creditcard table-->	
+		<action name="sqoop_update_creditcard_table">
+			<sqoop xmlns="uri:oozie:sqoop-action:0.2">
+				<job-tracker>${jobTracker}</job-tracker>
+				<name-node>${nameNode}</name-node>
+				<configuration>
+					<property>
+						<name>mapred.job.queue.name</name>
+						<value>${queueName}</value>
+					</property>
+				</configuration>
+				<command>job --meta-connect jdbc:hsqldb:hsql://localhost:16000/sqoop --exec update_creditcard_data</command>		
+			</sqoop>
+			<ok to="insert_data_to_partitioned_creditcard_table"/>
+			<error to="kill_job" />
+		</action>		
+		<!-- step 6 insert_data_to_partitioned_creditcard_table -->
+		<action name="insert_data_to_partitioned_creditcard_table">
+			<hive xmlns="uri:oozie:hive-action:0.4">
+				<job-tracker>${jobTracker}</job-tracker>
+				<name-node>${nameNode}</name-node>				
+				<script>/user/maria_dev/hadoop_casestudy/insert_data_to_partitioned_creditcard_table.txt</script>			
+			</hive>
+			<ok to="sqoop_update_time_table" />
+			<error to="kill_job" />
+		</action>		
+		<!-- step 7 : update time table-->	
+		<action name="sqoop_update_time_table">
+			<sqoop xmlns="uri:oozie:sqoop-action:0.2">
+				<job-tracker>${jobTracker}</job-tracker>
+				<name-node>${nameNode}</name-node>
+				<configuration>
+					<property>
+						<name>mapred.job.queue.name</name>
+						<value>${queueName}</value>
+					</property>
+				</configuration>
+				<command>job --meta-connect jdbc:hsqldb:hsql://localhost:16000/sqoop --exec update_time_data</command>	
+			</sqoop>
+			<ok to="insert_data_to_partitioned_time_table"/>
+			<error to="kill_job" />
+		</action>		
+		<!-- step 8 insert_data_to_partitioned_time_table -->
+		<action name="insert_data_to_partitioned_time_table">
+			<hive xmlns="uri:oozie:hive-action:0.4">
+				<job-tracker>${jobTracker}</job-tracker>
+				<name-node>${nameNode}</name-node>				
+				<script>/user/maria_dev/hadoop_casestudy/insert_data_to_partitioned_time_table.txt</script>			
+			</hive>
+			<ok to="end" />
+			<error to="kill_job" />
+		</action>		
+		<kill name="kill_job">
+			<message>Job failed</message>
+		</kill>				
+	<end name="end"/>
+</workflow-app>

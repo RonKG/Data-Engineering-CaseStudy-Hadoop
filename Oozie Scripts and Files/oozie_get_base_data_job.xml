@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Oozie Workflow for importing Original / Base tables from RDBMS -->
+
+<workflow-app xmlns="uri:oozie:workflow:0.4" name="rdbms-to-hdfs-creating-base-tables">
+	<start to="sqoop_base_customer_data_to_HDFS"/>
+		<!-- step 1 -->	
+		<action name="sqoop_base_customer_data_to_HDFS">
+			<sqoop xmlns="uri:oozie:sqoop-action:0.2">
+				<job-tracker>${jobTracker}</job-tracker>
+				<name-node>${nameNode}</name-node>
+				<prepare>					
+					<delete path="${nameNode}/user/maria_dev/hadoop_casestudy/customer_tables"/>	
+				</prepare>
+				<configuration>
+					<property>
+						<name>mapred.job.queue.name</name>
+						<value>${queueName}</value>
+					</property>
+				</configuration>
+				<command>job --meta-connect jdbc:hsqldb:hsql://localhost:16000/sqoop --exec customer_job</command>	
+			</sqoop>
+			<ok to="create_temp_external_customer_table"/>
+			<error to="kill_job"/>
+		</action>		
+		<!-- step 2 -->
+		<action name="create_temp_external_customer_table">
+			<hive xmlns="uri:oozie:hive-action:0.4">
+				<job-tracker>${jobTracker}</job-tracker>
+				<name-node>${nameNode}</name-node>
+				<script>/user/maria_dev/hadoop_casestudy/create_temp_external_customer_table.txt</script>			
+			</hive>	
+			<ok to="create_partitioned_customer_table"/>
+			<error to="kill_job" />	
+		</action>
+		<!-- step 3 -->
+		<action name="create_partitioned_customer_table">
+			<hive xmlns="uri:oozie:hive-action:0.4">
+				<job-tracker>${jobTracker}</job-tracker>
+				<name-node>${nameNode}</name-node>
+				<prepare>
+					<delete path="${nameNode}/user/maria_dev/hadoop_casestudy/CDW_SAPP_D_CUSTOMER"/>
+				</prepare>
+				<script>/user/maria_dev/hadoop_casestudy/create_partitioned_customer_table.txt</script>	
+			</hive>
+			<ok to="insert_data_to_partitioned_customer_table"/>
+			<error to="kill_job" />
+		</action>		
+		<!-- step 4 -->
+		<action name="insert_data_to_partitioned_customer_table">
+			<hive xmlns="uri:oozie:hive-action:0.4">
+				<job-tracker>${jobTracker}</job-tracker>
+				<name-node>${nameNode}</name-node>				
+				<script>/user/maria_dev/hadoop_casestudy/insert_data_to_partitioned_customer_table.txt</script>			
+			</hive>
+			<ok to="sqoop_base_branch_data_to_HDFS" />
+			<error to="kill_job" />
+		</action>
+		<!-- step 5 -->	
+		<action name="sqoop_base_branch_data_to_HDFS">
+			<sqoop xmlns="uri:oozie:sqoop-action:0.2">
+				<job-tracker>${jobTracker}</job-tracker>
+				<name-node>${nameNode}</name-node>
+				<prepare>
+					<delete path="${nameNode}/user/maria_dev/hadoop_casestudy/branch_tables"/>
+				</prepare>
+				<configuration>
+					<property>
+						<name>mapred.job.queue.name</name>
+						<value>${queueName}</value>
+					</property>
+				</configuration>
+				<command>job --meta-connect jdbc:hsqldb:hsql://localhost:16000/sqoop --exec branch_job</command>		
+			</sqoop>
+			<ok to="create_temp_external_branch_table"/>
+			<error to="kill_job"/>
+		</action>	
+		<!-- step 6 -->
+		<action name="create_temp_external_branch_table">
+			<hive xmlns="uri:oozie:hive-action:0.4">
+				<job-tracker>${jobTracker}</job-tracker>
+				<name-node>${nameNode}</name-node>
+				<script>/user/maria_dev/hadoop_casestudy/create_temp_external_branch_table.txt</script>	
+			</hive>	
+			<ok to="create_partitioned_branch_table"/>
+			<error to="kill_job" />	
+		</action>
+		<!-- step 7 -->
+		<action name="create_partitioned_branch_table">
+			<hive xmlns="uri:oozie:hive-action:0.4">
+				<job-tracker>${jobTracker}</job-tracker>
+				<name-node>${nameNode}</name-node>
+				<prepare>
+					<delete path="${nameNode}/user/maria_dev/hadoop_casestudy/CDW_SAPP_D_BRANCH"/>
+				</prepare>
+				<script>/user/maria_dev/hadoop_casestudy/create_partitioned_branch_table.txt</script>	
+			</hive>
+			<ok to="insert_data_to_partitioned_branch_table"/>
+			<error to="kill_job" />
+		</action>		
+		<!-- step 8 -->
+		<action name="insert_data_to_partitioned_branch_table">
+			<hive xmlns="uri:oozie:hive-action:0.4">
+				<job-tracker>${jobTracker}</job-tracker>
+				<name-node>${nameNode}</name-node>				
+				<script>/user/maria_dev/hadoop_casestudy/insert_data_to_partitioned_branch_table.txt</script>			
+			</hive>
+			<ok to="sqoop_base_creditcard_data_to_HDFS" />
+			<error to="kill_job" />
+		</action>
+		<!-- step 9 -->
+		<action name="sqoop_base_creditcard_data_to_HDFS">
+			<sqoop xmlns="uri:oozie:sqoop-action:0.2">
+				<job-tracker>${jobTracker}</job-tracker>
+				<name-node>${nameNode}</name-node>
+				<prepare>
+					<delete path="${nameNode}/user/maria_dev/hadoop_casestudy/creditcard_tables"/>
+				</prepare>
+				<configuration>
+					<property>
+						<name>mapred.job.queue.name</name>
+						<value>${queueName}</value>
+					</property>
+				</configuration>
+				<command>job --meta-connect jdbc:hsqldb:hsql://localhost:16000/sqoop --exec creditcard_job</command>		
+			</sqoop>
+			<ok to="create_temp_external_creditcard_table"/>
+			<error to="kill_job"/>
+		</action>	
+		<!-- step 6 -->
+		<action name="create_temp_external_creditcard_table">
+			<hive xmlns="uri:oozie:hive-action:0.4">
+				<job-tracker>${jobTracker}</job-tracker>
+				<name-node>${nameNode}</name-node>
+				<script>/user/maria_dev/hadoop_casestudy/create_temp_external_creditcard_table.txt</script>			
+			</hive>	
+			<ok to="create_partitioned_creditcard_table"/>
+			<error to="kill_job" />	
+		</action>
+		<!-- step 7 -->
+		<action name="create_partitioned_creditcard_table">
+			<hive xmlns="uri:oozie:hive-action:0.4">
+				<job-tracker>${jobTracker}</job-tracker>
+				<name-node>${nameNode}</name-node>
+				<prepare>
+					<delete path="${nameNode}/user/maria_dev/hadoop_casestudy/CDW_SAPP_F_CREDITCARD"/>
+				</prepare>
+				<script>/user/maria_dev/hadoop_casestudy/create_partitioned_creditcard_table.txt</script>	
+			</hive>
+			<ok to="insert_data_to_partitioned_creditcard_table"/>
+			<error to="kill_job" />
+		</action>		
+		<!-- step 8 -->
+		<action name="insert_data_to_partitioned_creditcard_table">
+			<hive xmlns="uri:oozie:hive-action:0.4">
+				<job-tracker>${jobTracker}</job-tracker>
+				<name-node>${nameNode}</name-node>				
+				<script>/user/maria_dev/hadoop_casestudy/insert_data_to_partitioned_creditcard_table.txt</script>			
+			</hive>
+			<ok to="sqoop_base_time_data_to_HDFS" />
+			<error to="kill_job" />
+		</action>
+		<!-- step 9 -->		
+		<action name="sqoop_base_time_data_to_HDFS">
+			<sqoop xmlns="uri:oozie:sqoop-action:0.2">
+				<job-tracker>${jobTracker}</job-tracker>
+				<name-node>${nameNode}</name-node>
+				<prepare>
+					<delete path="${nameNode}/user/maria_dev/hadoop_casestudy/time_tables"/>
+				</prepare>
+				<configuration>
+					<property>
+						<name>mapred.job.queue.name</name>
+						<value>${queueName}</value>
+					</property>
+				</configuration>
+				<command>job --meta-connect jdbc:hsqldb:hsql://localhost:16000/sqoop --exec time_job</command>		
+			</sqoop>
+			<ok to="create_temp_external_time_table"/>
+			<error to="kill_job"/>
+		</action>	
+		<!-- step 10 -->
+		<action name="create_temp_external_time_table">
+			<hive xmlns="uri:oozie:hive-action:0.4">
+				<job-tracker>${jobTracker}</job-tracker>
+				<name-node>${nameNode}</name-node>
+				<script>/user/maria_dev/hadoop_casestudy/create_temp_external_time_table.txt</script>	
+			</hive>	
+			<ok to="create_partitioned_time_table"/>
+			<error to="kill_job" />	
+		</action>
+		<!-- step 11 -->
+		<action name="create_partitioned_time_table">
+			<hive xmlns="uri:oozie:hive-action:0.4">
+				<job-tracker>${jobTracker}</job-tracker>
+				<name-node>${nameNode}</name-node>
+				<prepare>
+					<delete path="${nameNode}/user/maria_dev/hadoop_casestudy/CDW_SAPP_D_TIME"/>
+				</prepare>
+				<script>/user/maria_dev/hadoop_casestudy/create_partitioned_time_table.txt</script>	
+			</hive>
+			<ok to="insert_data_to_partitioned_time_table"/>
+			<error to="kill_job" />
+		</action>		
+		<!-- step 12 -->
+		<action name="insert_data_to_partitioned_time_table">
+			<hive xmlns="uri:oozie:hive-action:0.4">
+				<job-tracker>${jobTracker}</job-tracker>
+				<name-node>${nameNode}</name-node>				
+				<script>/user/maria_dev/hadoop_casestudy/insert_data_to_partitioned_time_table.txt</script>			
+			</hive>
+			<ok to="end" />
+			<error to="kill_job" />
+		</action>			
+		<kill name="kill_job">
+			<message>Job failed</message>
+		</kill>
+	<end name="end" />
+</workflow-app>

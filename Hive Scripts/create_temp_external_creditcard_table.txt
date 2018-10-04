@@ -1,0 +1,14 @@
+DROP TABLE IF EXISTS temp3;
+CREATE EXTERNAL TABLE temp3
+	( 		
+	  		TRANSACTION_ID     STRING,
+			CUST_CC_NO         STRING, 
+			TIMEID             STRING, 
+			BRANCH_CODE        STRING, 
+			CUST_SSN           STRING, 
+			TRANSACTION_TYPE   STRING,
+			TRANSACTION_VALUE  DECIMAL(20,3)
+	 )
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+LOCATION'/user/maria_dev/hadoop_casestudy/creditcard_tables'
+tblproperties ("skip.header.line.count"="0");

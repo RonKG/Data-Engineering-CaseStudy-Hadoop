@@ -1,0 +1,12 @@
+DROP TABLE IF EXISTS temp4;
+CREATE EXTERNAL TABLE temp4
+	( 		
+	  		TIMEID   STRING, 
+			DAY      STRING, 
+			MONTH    STRING, 
+			QUARTER   STRING,
+	 		YEAR     STRING
+	 )
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+LOCATION'/user/maria_dev/hadoop_casestudy/time_tables'
+tblproperties ("skip.header.line.count"="0");

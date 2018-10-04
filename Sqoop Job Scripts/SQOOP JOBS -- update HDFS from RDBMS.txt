@@ -1,0 +1,198 @@
+Create job for update external tables in hive
+Note:You have to use 'date' field when you will use "--incremental lastmodified
+
+Problem with lastmodified: it will not delete old data in hdfs .It will append new data(row) with older
+data(row) or get new data only. The Solution is use --merge-key instead of lastmodified
+
+Sqoop job commands
+# To list existing Sqoop Jobs
+sqoop job --list
+# To show details of Sqoop Job
+sqoop job --show incrementalImportJob
+# To Execute Sqoop Job
+sqoop job --exec incrementalImportJob
+# To drop a Sqoop Job
+sqoop job --delete incrementalImportJob
+# show how many jobs are created in sqoop meta store
+sqoop job --meta-connect jdbc:hsqldb:hsql://localhost:16000/sqoop --list
+# command will Execute sqoop meta-store job
+sqoop job --meta-connect jdbc:hsqldb:hsql://localhost:16000/sqoop --exec updateData
+# run metastore
+sqoop-metastore
+
+# created TIMEID column in the cdw_sapp_creditcard MYSQL table
+	
+	SELECT * FROM CDW_SAPP.CDW_SAPP_CREDITCARD; //before view
+	ALTER TABLE CDW_SAPP_CREDITCARD
+	DROP COLUMN TIMEID;                         // safety check
+	ALTER TABLE CDW_SAPP_CREDITCARD
+	ADD COLUMN TIMEID int NOT NULL AFTER YEAR;   // create column of type INT
+	UPDATE CDW_SAPP_CREDITCARD SET TIMEID = CAST(CONCAT(YEAR,LPAD(MONTH,2,0), LPAD(DAY,2,0)) as UNSIGNED);
+	SELECT * FROM CDW_SAPP_CREDITCARD;           // after view
+
+-------------------------------------------------------------
+# job for updating customer_tables
+-------------------------------------------------------------
+
+## tester sqoop import before sqoop job
+sqoop import \
+--connect jdbc:mysql://localhost/CDW_SAPP \
+--driver com.mysql.jdbc.Driver \
+--table CDW_SAPP_CUSTOMER \
+--fields-terminated-by ',' \
+--merge-key SSN \
+--incremental lastmodified \
+--check-column LAST_UPDATED \
+--last-value '2018-09-07 16:10:15' \
+--target-dir /user/maria_dev/hadoop_casestudy/customer_tables \
+-m1
+----------
+###############
+sqoop job \
+--meta-connect jdbc:hsqldb:hsql://localhost:16000/sqoop \
+--create update_customer_data \
+-- import \
+--connect jdbc:mysql://localhost/CDW_SAPP \
+--driver com.mysql.jdbc.Driver \
+--table CDW_SAPP_CUSTOMER \
+--fields-terminated-by ',' \
+--merge-key SSN \
+--incremental lastmodified \
+--check-column LAST_UPDATED \
+--last-value '2018-09-07 16:10:15' \
+--target-dir /user/maria_dev/hadoop_casestudy/customer_tables \
+-m1
+
+-------------------------------------------------------------
+# job for updating branch_tables
+-------------------------------------------------------------
+
+## tester sqoop import before sqoop job
+sqoop import \
+--connect jdbc:mysql://localhost/CDW_SAPP \
+--driver com.mysql.jdbc.Driver \
+--query \
+'SELECT BRANCH_CODE, BRANCH_NAME, BRANCH_STREET, BRANCH_CITY, BRANCH_STATE, COALESCE(BRANCH_ZIP,99999) AS BRANCH_ZIP, 
+INSERT(INSERT(INSERT(BRANCH_PHONE,1,0, "("), 5,0,") "),10,0,"-") AS BRANCH_PHONE, 
+LAST_UPDATED FROM CDW_SAPP_BRANCH WHERE $CONDITIONS' \
+--fields-terminated-by '\t' \
+--m 1 \
+--merge-key BRANCH_CODE \
+--incremental lastmodified \
+--check-column LAST_UPDATED \
+--last-value '2018-01-01 16:10:15' \
+--target-dir /user/maria_dev/hadoop_casestudy/branch_tables
+--------------
+
+###############
+sqoop job \
+--meta-connect jdbc:hsqldb:hsql://localhost:16000/sqoop \
+--create update_branch_data \
+-- import \
+--connect jdbc:mysql://localhost/CDW_SAPP \
+--driver com.mysql.jdbc.Driver \
+--query \
+'SELECT BRANCH_CODE, BRANCH_NAME, BRANCH_STREET, BRANCH_CITY, BRANCH_STATE, COALESCE(BRANCH_ZIP,99999) AS BRANCH_ZIP, 
+INSERT(INSERT(INSERT(BRANCH_PHONE,1,0, "("), 5,0,") "),10,0,"-") AS BRANCH_PHONE, 
+LAST_UPDATED FROM CDW_SAPP_BRANCH WHERE $CONDITIONS' \
+--fields-terminated-by '\t' \
+--m 1 \
+--merge-key BRANCH_CODE \
+--incremental lastmodified \
+--check-column LAST_UPDATED \
+--last-value '2018-01-01 16:10:15' \
+--target-dir /user/maria_dev/hadoop_casestudy/branch_tables
+
+-------------------------------------------------------------
+# job for updating table creditcard_tables
+-------------------------------------------------------------
+
+## tester sqoop import before sqoop job
+sqoop import \
+--connect jdbc:mysql://localhost/CDW_SAPP \
+--driver com.mysql.jdbc.Driver \
+--query \
+'SELECT TRANSACTION_ID, CREDIT_CARD_NO AS CUST_CC_NO, CONCAT(LPAD(DAY,2,0),LPAD(MONTH,2,0),YEAR)AS TIMEID, BRANCH_CODE, CUST_SSN, TRANSACTION_TYPE, ROUND(TRANSACTION_VALUE, 2) AS TRANSACTION_VALUE FROM CDW_SAPP_CREDITCARD WHERE $CONDITIONS' \
+--fields-terminated-by ',' \
+--m 1 \
+--incremental append \
+--check-column transaction_id \
+--last-value '46500' \
+--target-dir /user/maria_dev/hadoop_casestudy/creditcard_tables
+---------------
+
+###############
+sqoop job \
+--meta-connect jdbc:hsqldb:hsql://localhost:16000/sqoop \
+--create update_creditcard_data \
+-- import \
+--connect jdbc:mysql://localhost/CDW_SAPP \
+--driver com.mysql.jdbc.Driver \
+--query \
+'SELECT TRANSACTION_ID, CREDIT_CARD_NO AS CUST_CC_NO, CONCAT(LPAD(DAY,2,0),LPAD(MONTH,2,0),YEAR)AS TIMEID, BRANCH_CODE, CUST_SSN, TRANSACTION_TYPE, ROUND(TRANSACTION_VALUE, 2) AS TRANSACTION_VALUE FROM CDW_SAPP_CREDITCARD WHERE $CONDITIONS' \
+--fields-terminated-by ',' \
+--incremental append \
+--check-column transaction_id \
+--last-value '46500' \
+--target-dir /user/maria_dev/hadoop_casestudy/creditcard_tables \
+-m1
+
+-------------------------------------------------------------
+# job for updating time_tables
+-------------------------------------------------------------
+
+
+## tester sqoop import before sqoop job
+sqoop import \
+--connect jdbc:mysql://localhost/CDW_SAPP \
+--driver com.mysql.jdbc.Driver \
+--query \
+'SELECT 
+TIMEID AS TIMEID, 
+DAY AS DAY,
+MONTH AS MONTH, 
+QUARTER(CONCAT(YEAR,LPAD(MONTH,2,0), LPAD(DAY,2,0))) AS QUARTER, 
+YEAR AS YEAR 
+FROM CDW_SAPP_CREDITCARD WHERE $CONDITIONS' \
+--m 1 \
+--incremental append \
+--check-column TIMEID \
+--last-value 20180101 \
+--fields-terminated-by ',' \
+--target-dir /user/maria_dev/hadoop_casestudy/time_tables
+
+---------------
+
+###############
+sqoop job \
+--meta-connect jdbc:hsqldb:hsql://localhost:16000/sqoop \
+--create update_time_data \
+-- import \
+--connect jdbc:mysql://localhost/CDW_SAPP \
+--driver com.mysql.jdbc.Driver \
+--query \
+'SELECT 
+TIMEID AS TIMEID, 
+DAY AS DAY,
+MONTH AS MONTH, 
+QUARTER(CONCAT(YEAR,LPAD(MONTH,2,0), LPAD(DAY,2,0))) AS QUARTER, 
+YEAR AS YEAR 
+FROM CDW_SAPP_CREDITCARD WHERE $CONDITIONS' \
+--fields-terminated-by ',' \
+--incremental append \
+--check-column TIMEID \
+--last-value 20180101 \
+--target-dir /user/maria_dev/hadoop_casestudy/time_tables \
+-m1
+
+
+
+# LIST OF ALL UPDATE JOBS
+customer_job
+branch_job
+creditcard_job
+time_job
+update_customer_data
+update_branch_data
+update_creditcard_data
+update_time_data
